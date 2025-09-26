@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Dashboard</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        form { margin-bottom: 20px; }
+        input, textarea, button { display: block; margin: 10px 0; width: 100%; }
+        ul { list-style: none; padding: 0; }
+        li { border: 1px solid #ddd; padding: 10px; margin: 10px 0; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <h1>Admin Dashboard</h1>
+
+    <div id="login-section">
+        <h2>Login</h2>
+        <form id="login-form">
+            <input type="text" id="username" placeholder="Username" required>
+            <input type="password" id="password" placeholder="Password" required>
+            <button type="submit">Login</button>
+        </form>
+    </div>
+
+    <div id="admin-content" class="hidden">
+        <button id="logout">Logout</button>
+
+        <h2>Create New Post</h2>
+        <form id="create-post-form">
+            <input type="text" id="title" placeholder="Title" required>
+            <textarea id="content" placeholder="Content" required></textarea>
+            <button type="submit">Create</button>
+        </form>
+
+        <h2>All Posts</h2>
+        <ul id="posts-list"></ul>
+    </div>
+
+    <script>
+        const apiBase = 'http://localhost:5000/api'; // Update to your Render URL later
+        const token = localStorage.getItem('token');
+
+        if (token) {
+            showAdminContent();
+            fetchPosts();
+        }
+
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            try {
+                const res = await fetch(`${apiBase}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                const data = await res.json();
+                if (data.token) {
+                    localStorage.setItem('token', data.token);
+                    showAdminContent();
+                    fetchPosts();
+                } else {
+                    alert(data.error || 'Login failed');
+                }
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
+        });
+
+        document.getElementById('logout').addEventListener('click', () => {
+            localStorage.removeItem('token');
+            location.reload();
+        });
+
+        document.getElementById('create-post-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const title = document.getElementById('title').value;
+            const content = document.getElementById('content').value;
+            try {
+                const res = await fetch(`${apiBase}/posts`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify({ title, content })
+                });
+                if (res.ok) {
+                    fetchPosts();
+                    alert('Post created');
+                } else {
+                    alert('Error creating post');
+                }
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
+        });
+
+        async function fetchPosts() {
+            try {
+                const res = await fetch(`${apiBase}/posts/all`, { // Use /all for admins
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                });
+                const posts = await res.json();
+                const list = document.getElementById('posts-list');
+                list.innerHTML = '';
+                posts.forEach(post => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `
+                        <h3>${post.title}</h3>
+                        <p>${post.content}</p>
+                        <p>Published: ${post.published ? 'Yes' : 'No'}</p>
+                        <button onclick="togglePublish(${post.id})">Toggle Publish</button>
+                    `;
+                    list.appendChild(li);
+                });
+            } catch (err) {
+                alert('Error fetching posts');
+            }
+        }
+
+        async function togglePublish(id) {
+            try {
+                const res = await fetch(`${apiBase}/posts/${id}/publish`, {
+                    method: 'PUT',
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                });
+                if (res.ok) {
+                    fetchPosts();
+                } else {
+                    alert('Error toggling publish');
+                }
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
+        }
+
+        function showAdminContent() {
+            document.getElementById('login-section').classList.add('hidden');
+            document.getElementById('admin-content').classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>

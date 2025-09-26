@@ -48,7 +48,7 @@
     </div>
 
     <script>
-    const apiBase = 'http://localhost:5000/api';
+    const apiBase = process.env.API_BASE_URL || 'http://localhost:5000/api';
 
     // Check if token exists on load
     if (localStorage.getItem('token')) {

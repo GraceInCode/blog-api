@@ -10,7 +10,15 @@ const prisma = new PrismaClient();
 const app = express();
 
 app.use(express.json()); // For parsing JSON bodies
-app.use(cors({ origin: ['https://blog-api-bg9g.onrender.com'] })); 
+app.use(cors({ origin: [
+    'https://blog-api-bg9g.onrender.com',
+    'https://blog-user-qtsx.onrender.com',
+    'https://blog-admin-6pb1.onrender.com',
+    'https://blog-reader-3w8q.onrender.com'
+],
+methods: ['GET', 'POST', 'PUT', 'DELETE'], // Explicit for safety
+allowedHeaders: ['Content-Type', 'Authorization'] // For JWT and JSON
+})); 
 
 // Middleware for rate-limit
 const limiter = rateLimit({

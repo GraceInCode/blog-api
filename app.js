@@ -10,7 +10,7 @@ const prisma = new PrismaClient();
 const app = express();
 
 app.use(express.json()); // For parsing JSON bodies
-app.use(cors({ origin: ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:8080', 'http://localhost:8081'] })); // Allow the front-ends
+app.use(cors({ origin: ['https://blog-api-bg9g.onrender.com'] })); 
 
 // Middleware for rate-limit
 const limiter = rateLimit({
@@ -26,6 +26,10 @@ app.use(require('morgan')('dev'))
 // Passport setup
 require('./config/passport')(passport);
 app.use(passport.initialize());
+
+app.get('/', (req, res) => {
+    res.json({ message: 'Blog API is running! Use /api/posts, /api/auth, etc.' });
+});
 
 // Routes
 app.use('/api/posts', require('./routes/posts'));
